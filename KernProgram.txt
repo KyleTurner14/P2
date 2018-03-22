@@ -1,0 +1,40 @@
+//add libraries if necessary.
+#include <linux/module.h>
+#include <linux/kernel.h>
+
+//initializes itself
+int init_module(void){
+	printk(KERN_INFO "Installing module.\n");
+	return 0;
+}
+
+//de-initializes itself
+void cleanup_module(void){
+	printk(KERN_INFO "Removing module.\n");
+}
+
+//section 1
+/*function that registers device or add to initialize module.
+In this section you will register itself and obtain a new device number.*/
+/*function that opens the device.
+In this section you will need to report using printk each time it is opened.
+Also, you need to log the device number.*/
+/*function that closes the device.
+In this section you will need to report using printk every time it is closed. */
+
+//section 2
+/*function that reads from the device:
+In this section you will need to allow bytes to be read back out in FIFO fashion.
+Also, remove bytes from the buffer as they are read out.
+Also, if not enough data is available to service a read request, the driver must
+respond with only the amount available (including 0 bytes) 
+Also, it must report using printk each time it is read.*/
+
+
+//section 3
+/*function that writes to the device.
+In this section you will store bytes up to a constant buffer size of at least 1KB.
+Also, If not enoug buffer is availabe to store a request the driver must store up
+to the amount available. (including 0 bytes).
+Also, it must report using printk each time it is written.
+*/
