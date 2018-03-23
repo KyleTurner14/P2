@@ -8,17 +8,22 @@
 
 //static vals
 static int deviceNumber;
+
+static int numRead = 0;
 static int numOpen = 0;
 static int numClose = 0;
 static int numWrite = 0;
+
+static int error_count = 0;
 static char message[1024] = {0};
-static short size_message;
+static short sizeMessage;
 static struct class* group14Class = NULL;
 static struct device* group14Device = NULL;
 
 //prototype functions
 
 static int dev_open(struct inode *, struct file *);
+static ssize_t dev_read(struct file *, char *, size_t, loff_t *);
 static ssize_t dev_write(struct file*, const char *, size_t, loff_t *);
 static int dev_release(struct inode *, struct file *);
 
@@ -36,6 +41,7 @@ MODULE_VERSION("1.0");
 static struct file_operations fops =
 {
     .open = dev_open,
+    .read = dev_read,
     .write = dev_write,
     .release = dev_release,
 };
@@ -92,11 +98,30 @@ static struct file_operations fops =
     printk(KERN_INFO "group 14: Device has been written to %d time(s)\n", numWrite);
     //store up to a buffer of 1kb
     sprintf(message, "%s(%zu letters)", buffer, len);
-    size_message = strlen(message);
+    sizeMessage = strlen(message);
     //if message is long then only store 1kb
     //if message is null then return 0
     printk(KERN_INFO "group 14: Received %zu characters from the user\n", len);
     return len;
+    }
+
+    static ssize_t dev_read(struct file * filep, char * buffer, size_t len, loff_t *offset){
+    //report using printk each time it is written to 
+    numRead++;
+    printk(KERN_INFO "group 14: Device has been read from %d time(s)\n", numRead);
+    //read info
+    error_count = 0;
+ 
+    error_count = copy_to_user(buffer, message, sizeMessage);
+    
+        if (error_count==0) {
+       printk(KERN_INFO "Sent %d bytes to the user\n", sizeMessage);
+        return (sizeMessage=0);
+        }
+        else{
+        printk(KERN_INFO "group 14: Failure to send %d bytes to the user\n", error_count);
+        return -EFAULT;
+        }
     }
 
     static int dev_release(struct inode *inodep, struct file *filep){
