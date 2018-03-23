@@ -1,25 +1,91 @@
+//libraries.
+#include <linux/init.h>
 #include <linux/module.h>
+#include <linux/device.h>
 #include <linux/kernel.h>
+#include <linux/fs.h>
+#include <linux/uaccess.h>
+
+
 
 //static vals
+static int deviceNumber;
+static struct class* group14Class = NULL;
+static struct device* group14Device = NULL;
 
 //prototype functions
-static ssize_t dev_write(struct file*, const char *, size_t, loff_t *);
+//static ssize_t dev_write(struct file*, const char *, size_t, loff_t *);
+static int dev_release(struct inode *inodep, struct file *filep);
+//define
+#define BUFF_LEN 1024
+#define DEVICE_NAME "group14"
+#define CLASS_NAME "gp14"
+
+//MODULE_INFO
+MODULE_LICENSE("GPL");
+MODULE_AUTHOR("Group 14");
+MODULE_DESCRIPTION("Linux Driver");
+MODULE_VERSION("1.0");
 
 static struct file_operations fops =
 {
-    .open = dev_open,
-    .read = dev_read,
-    .write = dev_write,
-    .close = dev_close,
+    
+    //.write = dev_write,
+    .release = dev_release,
 };
 
+    
 
-    int init_module(void){
-    printk(KERN_INFO "Installing Module...\n");
+    static int __init group14_init(void){
+    //initialize
+    printk(KERN_INFO "group 14: Installing Module...\n");
+    
+    //make sure device number is > 0
+    deviceNumber = register_chrdev(0, DEVICE_NAME, &fops);
+        if(deviceNumber<0){
+        printk(KERN_ALERT "group 14 failed to register a positive number\n.");
+        return deviceNumber;
+        }
+    printk(KERN_INFO "group 14: registered correctly with number %d\n", deviceNumber);
+
+    group14Class = class_create(THIS_MODULE,CLASS_NAME);
+        if(IS_ERR(group14Class)){
+        unregister_chrdev(deviceNumber, DEVICE_NAME);
+        printk(KERN_ALERT "Failed to register device class\n");
+        return PTR_ERR(group14Class);
+        }
+    
+    group14Device = device_create(group14Class, NULL, MKDEV(deviceNumber, 0), NULL, DEVICE_NAME );
+        if(IS_ERR(group14Device)){
+        class_destroy(group14Class);
+        unregister_chrdev(deviceNumber, DEVICE_NAME);
+        printk(KERN_ALERT "Failed to create the device\n");
+        return PTR_ERR(group14Device);
+        }
+    printk(KERN_INFO "group14: device class created correctly\n.");
     return 0;
     }
 
-    void cleanup_module(void){
-    printk(KERN_INFO "Closing Kernel!\n");
+    static void __exit group14_exit(void){
+    device_destroy(group14Class, MKDEV(deviceNumber, 0));
+    class_unregister(group14Class);
+    class_destroy(group14Class);
+    unregister_chrdev(deviceNumber, DEVICE_NAME);
+    printk(KERN_INFO "group14: Goodbye!\n");
     }
+        
+
+    //static ssize_t dev_write(struct file *filep, const char *buffer, size_t len, loff_t *offset){
+    //report using printk each time it is written to.
+    //printk(KERN_INFO "Device group 14 is being written to...");
+    //store up to a buffer of 1kb
+    //if message is long then only store 1kb
+    //}
+
+    static int dev_release(struct inode *inodep, struct file *filep){
+    printk(KERN_INFO "group14: Device successfully closed.\n");
+    return 0;
+    }
+
+    module_init(group14_init);
+    module_exit(group14_init);
