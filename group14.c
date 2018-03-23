@@ -1,3 +1,5 @@
+//libraries.
+#include <linux/init.h>
 #include <linux/module.h>
 #include <linux/device.h>
 #include <linux/kernel.h>
@@ -8,13 +10,18 @@
 static int deviceNumber;
 static int numOpen = 0;
 static int numClose = 0;
+static int numWrite = 0;
+static char message[1024] = {0};
+static short size_message;
 static struct class* group14Class = NULL;
 static struct device* group14Device = NULL;
 
 //prototype functions
+
 static int dev_open(struct inode *, struct file *);
-//static ssize_t dev_write(struct file*, const char *, size_t, loff_t *);
+static ssize_t dev_write(struct file*, const char *, size_t, loff_t *);
 static int dev_release(struct inode *, struct file *);
+
 //define
 #define BUFF_LEN 1024
 #define DEVICE_NAME "group14"
@@ -29,9 +36,11 @@ MODULE_VERSION("1.0");
 static struct file_operations fops =
 {
     .open = dev_open,
-    //.write = dev_write,
+    .write = dev_write,
     .release = dev_release,
 };
+
+   
 
     static int __init group14_init(void){
     //initialize
@@ -59,7 +68,7 @@ static struct file_operations fops =
         printk(KERN_ALERT "Failed to create the device\n");
         return PTR_ERR(group14Device);
         }
-    printk(KERN_INFO "group14: device class created correctly\n.");
+    printk(KERN_INFO "group 14: device class created correctly\n.");
     return 0;
     }
 
@@ -77,16 +86,22 @@ static struct file_operations fops =
     return 0;
     }
 
-    //static ssize_t dev_write(struct file *filep, const char *buffer, size_t len, loff_t *offset){
+    static ssize_t dev_write(struct file *filep, const char *buffer, size_t len, loff_t *offset){
     //report using printk each time it is written to.
-    //printk(KERN_INFO "Device group 14 is being written to...");
+    numWrite++;
+    printk(KERN_INFO "group 14: Device has been written to %d time(s)\n", numWrite);
     //store up to a buffer of 1kb
+    sprintf(message, "%s(%zu letters)", buffer, len);
+    size_message = strlen(message);
     //if message is long then only store 1kb
-    //}
+    //if message is null then return 0
+    printk(KERN_INFO "group 14: Received %zu characters from the user\n", len);
+    return len;
+    }
 
     static int dev_release(struct inode *inodep, struct file *filep){
     numClose++;
-    printk(KERN_INFO "group14: Device has been successfully closed %d time(s)\n", numClose);
+    printk(KERN_INFO "group 14: Device has been successfully closed %d time(s)\n", numClose);
     return 0;
     }
 
