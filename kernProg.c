@@ -4,8 +4,6 @@
 #include <linux/fs.h>
 #include <linux/uaccess.h>
 
-
-
 //static vals
 static int deviceNumber;
 static int numOpen = 0;
@@ -34,8 +32,6 @@ static struct file_operations fops =
     //.write = dev_write,
     .release = dev_release,
 };
-
-   
 
     static int __init group14_init(void){
     //initialize
