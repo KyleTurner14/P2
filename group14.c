@@ -1,9 +1,12 @@
+// Kyle Turner
+// Robert Shannahan
+// John Millner
+//
+// Group 14
+// Program 2
+
+
 //libraries.
-
-//John Millner
-//Robert Shannahan
-//Kyle Turner
-
 #include <linux/init.h>
 #include <linux/module.h>
 #include <linux/device.h>
@@ -13,6 +16,7 @@
 
 //static vals
 static int deviceNumber;
+
 static int numRead = 0;
 static int numOpen = 0;
 static int numClose = 0;
@@ -24,6 +28,7 @@ int size = 0;
 
 static int error_count = 0;
 static char message[1024] = {0};
+static short sizeMessage;
 static struct class* group14Class = NULL;
 static struct device* group14Device = NULL;
 
@@ -101,7 +106,13 @@ static int dev_open(struct inode* inodep, struct file * filep){
 
 static ssize_t dev_write(struct file *filep, const char *buffer, size_t len, loff_t *offset){
 
-	int i = 0;    
+	int i = 0;
+
+	// check for error
+	if(size >= BUFF_LEN){
+		printk(KERN_INFO "ERROR: Already Full.\n");
+		return -1;
+	}	
 
 	// report using printk each time it is written to.
 	numWrite++;
@@ -109,74 +120,43 @@ static ssize_t dev_write(struct file *filep, const char *buffer, size_t len, lof
 
 	// add new string to buffer
 	for(i = 0; i < len; i++){
-
 		// check for overflow
 		if(size >= BUFF_LEN){
 			printk(KERN_INFO "ERROR: Already Full.\n");
 			return -1;
 		}
 
-		// add the new string to the end of the message
 		message[back % BUFF_LEN] = buffer[i];
 
-		// increment
 		size++;
 		back = (back+1)%BUFF_LEN;
 
 	}// end for loop
 
-	printk(KERN_INFO "group 14: The length is currently %d bytes\n", back);
-
-	printk(KERN_INFO "group 14: Received %zu characters from the user\n", len);
+	//if message is null then return 0
+	printk(KERN_INFO "group 14: Received %zu bytes from the user\n", len);
 	return len;
 }
 
 static ssize_t dev_read(struct file * filep, char * buffer, size_t len, loff_t *offset){
-
-	int i = 0;
-	char sendBack[len];
-	
-	//char printOut[len] = "";
-
 	//report using printk each time it is written to 
 	numRead++;
 	printk(KERN_INFO "group 14: Device has been read from %d time(s)\n", numRead);
 
-	for(i = 0; i < len; i++){
+	//read info
+	error_count = 0;
 
-		// check for no characters left
-		if(size <= 0){
-			printk(KERN_INFO "No more characters left.\n");
-			break;
-		}
+	error_count = copy_to_user(buffer, message, sizeMessage);
 
-		sendBack[i] = message[i];
-		message[front] = 0;
-
-		// increment
-		//front = (front + 1) % BUFF_LEN;
-		//back = (back - 1) % BUFF_LEN;
-		size--;
-
+	if (error_count==0) {
+		printk(KERN_INFO "Sent %d bytes to the user\n", sizeMessage);
+		return (sizeMessage=0);
 	}
-
-	// check for errors
-	error_count = copy_to_user(buffer, sendBack, len);
-
-	//if error
-	if(error_count != 0){
-		printk(KERN_INFO "ERROR: Failed to send to back to user.\n");
-		return -1;
+	else{
+		printk(KERN_INFO "group 14: Failure to send %d bytes to the user\n", error_count);
+		return -EFAULT;
 	}
-
-	printk(KERN_INFO "group 14: Sent back %s.\n", sendBack);
-
-	printk(KERN_INFO "group 14: The length is currently %d bytes\n", back);
-
-	printk(KERN_INFO "group 14: Sent %d characters to the user\n", back);
-	return len;
-
-}//end dev_read 
+}
 
 static int dev_release(struct inode *inodep, struct file *filep){
 	numClose++;
@@ -186,4 +166,3 @@ static int dev_release(struct inode *inodep, struct file *filep){
 
 module_init(group14_init);
 module_exit(group14_exit);
-
