@@ -134,6 +134,7 @@ static struct file_operations fops =
     //report using printk each time it is written to 
     numRead++;
     printk(KERN_INFO "group 14: Device has been read from %d time(s)\n", numRead);
+    
     //read info
     error_count = 0;
  
