@@ -19,7 +19,6 @@ int size = 0;
 
 static int error_count = 0;
 static char message[1024] = {0};
-static short sizeMessage;
 static struct class* group14Class = NULL;
 static struct device* group14Device = NULL;
 
@@ -139,11 +138,11 @@ static ssize_t dev_read(struct file * filep, char * buffer, size_t len, loff_t *
 	printk(KERN_INFO "group 14: Device has been read from %d time(s)\n", numRead);
 
 	//read info
-	error_count = 0;
+	//error_count = 0;
 
-	for(i = 0; i < len; i++){
-		sendBack[i] = '0';
-	}
+	//for(i = 0; i < len; i++){
+	//	sendBack[i] = '0';
+	//}
 
 	for(i = 0; i < len; i++){
 
@@ -153,8 +152,8 @@ static ssize_t dev_read(struct file * filep, char * buffer, size_t len, loff_t *
 			break;
 		}
 
-		sendBack[i] = message[front % BUFF_LEN];
-		message[front % BUFF_LEN] = '0';
+		sendBack[i] = message[front];
+		message[i] = 0;
 
 		// increment
 		front = (front + 1) % BUFF_LEN;
