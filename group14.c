@@ -131,18 +131,11 @@ static ssize_t dev_read(struct file * filep, char * buffer, size_t len, loff_t *
 	int i = 0;
 	char sendBack[len];
 	
-	char printOut[len];
+	//char printOut[len] = "";
 
 	//report using printk each time it is written to 
 	numRead++;
 	printk(KERN_INFO "group 14: Device has been read from %d time(s)\n", numRead);
-
-	//read info
-	//error_count = 0;
-
-	//for(i = 0; i < len; i++){
-	//	sendBack[i] = '0';
-	//}
 
 	for(i = 0; i < len; i++){
 
@@ -152,12 +145,12 @@ static ssize_t dev_read(struct file * filep, char * buffer, size_t len, loff_t *
 			break;
 		}
 
-		sendBack[i] = message[front];
-		message[i] = 0;
+		sendBack[i] = message[i];
+		message[front] = 0;
 
 		// increment
-		front = (front + 1) % BUFF_LEN;
-		back = (back - 1) % BUFF_LEN;
+		//front = (front + 1) % BUFF_LEN;
+		//back = (back - 1) % BUFF_LEN;
 		size--;
 
 	}
@@ -171,12 +164,7 @@ static ssize_t dev_read(struct file * filep, char * buffer, size_t len, loff_t *
 		return -1;
 	}
 
-	for(i = 0; i < len; i++){
-		if(sendBack[i] != 0)
-		printOut[i] = sendBack[i];
-	}
-
-	printk(KERN_INFO "group 14: Sent back %s.\n", printOut);
+	printk(KERN_INFO "group 14: Sent back %s.\n", sendBack);
 
 	printk(KERN_INFO "group 14: The length is currently %d bytes\n", back);
 
