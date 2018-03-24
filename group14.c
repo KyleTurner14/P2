@@ -1,4 +1,9 @@
 //libraries.
+
+//John Millner
+//Robert Shannahan
+//Kyle Turner
+
 #include <linux/init.h>
 #include <linux/module.h>
 #include <linux/device.h>
