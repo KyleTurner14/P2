@@ -32,15 +32,15 @@ static struct class* group14Class = NULL;
 static struct device* group14Device = NULL;
 
 //prototype functions
-extern int __init group14Write_init(void);
-extern void __exit group14_exit
+extern int init group14Write_init(void);
+extern void  group14Write_exit(void)
 static int dev_open(struct inode *, struct file *);
 static ssize_t dev_write(struct file*, const char *, size_t, loff_t *);
 static int dev_release(struct inode *, struct file *);
 
 //define
 #define BUFF_LEN 1024
-#define DEVICE_NAME "group14"
+#define DEVICE_NAME "group14Write"
 #define CLASS_NAME "gp14"
 
 //MODULE_INFO
@@ -58,7 +58,7 @@ static struct file_operations fops =
 
 
 
-extern int __init group14Write_init(void){
+extern int init group14Write_init(void){
 	//initialize
 	printk(KERN_INFO "group 14: Installing Module...\n");
 
@@ -90,8 +90,8 @@ extern int __init group14Write_init(void){
 }
 
 
-extern void __exit group14_exit(void){
-	mutex_destroy(@group14_mutex)
+extern void group14_exit(void){
+	mutex_destroy(@stack_mutex)
 	device_destroy(group14Class, MKDEV(deviceNumber, 0));
 	class_unregister(group14Class);
 	class_destroy(group14Class);
@@ -142,6 +142,7 @@ static ssize_t dev_write(struct file *filep, const char *buffer, size_t len, lof
 	printk(KERN_INFO "group 14: Received %zu characters from the user\n", len);
 	return len;
 }
+
 
 
 
