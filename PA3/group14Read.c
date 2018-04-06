@@ -11,7 +11,7 @@
 #include <linux/uaccess.h>
 #include <linux/mutex.h>
 
-#include "global.h"
+#include "index.h"
 
 //static vals
 static int deviceNumber;
