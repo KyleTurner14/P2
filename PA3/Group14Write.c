@@ -1,9 +1,8 @@
-//libraries.
-
-//John Millner
 //Robert Shannahan
 //Kyle Turner
+//John Millner
 
+//libraries.
 #include <linux/init.h>
 #include <linux/module.h>
 #include <linux/device.h>
@@ -14,26 +13,21 @@
 
 //static vals
 static int deviceNumber;
-static int numRead = 0;
 static int numOpen = 0;
 static int numClose = 0;
 static int numWrite = 0;
-
-char mutex stack_mutex;
-
 
 int front = 0;
 int back = 0;
 int size = 0;
 
-static int error_count = 0;
-static char message[1024] = {0};
-static struct class* group14Class = NULL;
-static struct device* group14Device = NULL;
+static char message[1024]={0};
+static struct class* group14WriteClass = NULL;
+static struct device* group14WriteDevice = NULL;
 
 //prototype functions
-extern int init group14Write_init(void);
-extern void  group14Write_exit(void)
+extern int init_group14Write(void);
+extern void  cleanup_group14Write(void);
 static int dev_open(struct inode *, struct file *);
 static ssize_t dev_write(struct file*, const char *, size_t, loff_t *);
 static int dev_release(struct inode *, struct file *);
@@ -58,52 +52,46 @@ static struct file_operations fops =
 
 
 
-extern int init group14Write_init(void){
+	extern int init_group14Write(void){
 	//initialize
-	printk(KERN_INFO "group 14: Installing Module...\n");
+	printk(KERN_INFO "group 14 Write: Installing Module...\n");
 
 	//make sure device number is > 0
 	deviceNumber = register_chrdev(0, DEVICE_NAME, &fops);
 	if(deviceNumber<0){
-		printk(KERN_ALERT "group 14 failed to register a positive number\n.");
+		printk(KERN_ALERT "group 14 Write: failed to register a positive number\n.");
 		return deviceNumber;
 	}
-	printk(KERN_INFO "group 14: registered correctly with number %d\n", deviceNumber);
+	printk(KERN_INFO "group 14 Write: registered correctly with number %d\n", deviceNumber);
 
-	group14Class = class_create(THIS_MODULE,CLASS_NAME);
-	if(IS_ERR(group14Class)){
+	group14WriteClass = class_create(THIS_MODULE,CLASS_NAME);
+	if(IS_ERR(group14WriteClass)){
 		unregister_chrdev(deviceNumber, DEVICE_NAME);
 		printk(KERN_ALERT "Failed to register device class\n");
-		return PTR_ERR(group14Class);
+		return PTR_ERR(group14WriteClass);
 	}
 
-	group14Device = device_create(group14Class, NULL, MKDEV(deviceNumber, 0), NULL, DEVICE_NAME );
-	if(IS_ERR(group14Device)){
-		class_destroy(group14Class);
+	group14WriteDevice = device_create(group14WriteClass, NULL, MKDEV(deviceNumber, 0), NULL, DEVICE_NAME );
+	if(IS_ERR(group14WriteDevice)){
+		class_destroy(group14WriteClass);
 		unregister_chrdev(deviceNumber, DEVICE_NAME);
 		printk(KERN_ALERT "Failed to create the device\n");
-		return PTR_ERR(group14Device);
+		return PTR_ERR(group14WriteDevice);
 	}
-	printk(KERN_INFO "group 14: device class created correctly\n.");
-	mutex_init(&stack_mutex)
+	printk(KERN_INFO "group 14 Write: device class created correctly\n.");
 	return 0;
 }
 
 
-extern void group14_exit(void){
-	mutex_destroy(@stack_mutex)
-	device_destroy(group14Class, MKDEV(deviceNumber, 0));
-	class_unregister(group14Class);
-	class_destroy(group14Class);
+extern void cleanup_Group14Write(void){
+	device_destroy(group14WriteClass, MKDEV(deviceNumber, 0));
+	class_unregister(group14WriteClass);
+	class_destroy(group14WriteClass);
 	unregister_chrdev(deviceNumber, DEVICE_NAME);
-	printk(KERN_INFO "group 14: Goodbye!\n");
+	printk(KERN_INFO "group 14 Write: Goodbye!\n");
 }
 
 static int dev_open(struct inode* inodep, struct file * filep){
-
-	if(!mutex_trylock(&stack_mutex)){
-	printk(KERN_ALERT "Group 14: Device in use by another process");
-	return -EBUSY
 
 	numOpen++;
 	printk(KERN_INFO "group 14: Device has been opened %d time(s)\n", numOpen);
@@ -136,12 +124,18 @@ static ssize_t dev_write(struct file *filep, const char *buffer, size_t len, lof
 
 	}// end for loop
 
-	mutex_unlock(&stack_mutex)
 
 	printk(KERN_INFO "group 14: The length is currently %d bytes\n", back);
 	printk(KERN_INFO "group 14: Received %zu characters from the user\n", len);
 	return len;
 }
+
+static int dev_release(struct inode *inodep, struct file *filep){
+    numClose++;
+    printk(KERN_INFO "group 14: Device has been successfully closed %d time(s)\n", numClose);
+    return 0;
+}
+
 
 
 
