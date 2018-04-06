@@ -32,8 +32,8 @@ static struct class* group14WriteClass = NULL;
 static struct device* group14WriteDevice = NULL;
 
 //prototype functions
-extern int init_group14Write(void);
-extern void  cleanup_group14Write(void);
+extern int init_module(void);
+extern void cleanup_module(void);
 static int dev_open(struct inode *, struct file *);
 static ssize_t dev_write(struct file*, const char *, size_t, loff_t *);
 static int dev_release(struct inode *, struct file *);
@@ -56,7 +56,7 @@ static struct file_operations fops =
 		.release = dev_release,
 };
 
-	extern int init_group14Write(void){
+	extern int init_module(void){
 	//initialize
 	printk(KERN_INFO "group 14 Write: Installing Module...\n");
 
@@ -87,7 +87,7 @@ static struct file_operations fops =
 }
 
 
-extern void cleanup_Group14Write(void){
+extern void cleanup_module(void){
 	device_destroy(group14WriteClass, MKDEV(deviceNumber, 0));
 	class_unregister(group14WriteClass);
 	class_destroy(group14WriteClass);
@@ -143,11 +143,5 @@ static int dev_release(struct inode *inodep, struct file *filep){
     printk(KERN_INFO "group 14: Device has been successfully closed %d time(s)\n", numClose);
     return 0;
 }
-
-
-
-
-
-
 
 
