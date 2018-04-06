@@ -10,6 +10,7 @@
 #include <linux/fs.h>
 #include <linux/uaccess.h>
 
+#include "index.h"
 
 
 //static vals
