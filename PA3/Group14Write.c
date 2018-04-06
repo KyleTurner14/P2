@@ -17,11 +17,13 @@ static int numOpen = 0;
 static int numClose = 0;
 static int numWrite = 0;
 
-int front = 0;
 int back = 0;
 int size = 0;
 
-static char message[1024]={0};
+extern struct mutex queueMutex;
+extern char  message[1024];
+
+
 static struct class* group14WriteClass = NULL;
 static struct device* group14WriteDevice = NULL;
 
@@ -94,17 +96,21 @@ extern void cleanup_Group14Write(void){
 static int dev_open(struct inode* inodep, struct file * filep){
 
 	numOpen++;
-	printk(KERN_INFO "group 14: Device has been opened %d time(s)\n", numOpen);
+	printk(KERN_INFO "group 14 Write: Device has been opened %d time(s)\n", numOpen);
 	return 0;
 }
 
 static ssize_t dev_write(struct file *filep, const char *buffer, size_t len, loff_t *offset){
 
+	
+
 	int i = 0;    
+
+	mutex_lock(&queueMutex);
 
 	// report using printk each time it is written to.
 	numWrite++;
-	printk(KERN_INFO "group 14: Device has been written to %d time(s)\n", numWrite);
+	printk(KERN_INFO "group 14 Write: Device has been written to %d time(s)\n", numWrite);
 
 	// add new string to buffer
 	for(i = 0; i < len; i++){
@@ -123,10 +129,10 @@ static ssize_t dev_write(struct file *filep, const char *buffer, size_t len, lof
 		back = (back+1)%BUFF_LEN;
 
 	}// end for loop
+	mutex_unlock(&queueMutex);
 
-
-	printk(KERN_INFO "group 14: The length is currently %d bytes\n", back);
-	printk(KERN_INFO "group 14: Received %zu characters from the user\n", len);
+	printk(KERN_INFO "group 14 Write: The length is currently %d bytes\n", back);
+	printk(KERN_INFO "group 14 Write: Received %zu characters from the user\n", len);
 	return len;
 }
 
@@ -135,6 +141,7 @@ static int dev_release(struct inode *inodep, struct file *filep){
     printk(KERN_INFO "group 14: Device has been successfully closed %d time(s)\n", numClose);
     return 0;
 }
+
 
 
 
