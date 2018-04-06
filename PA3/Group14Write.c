@@ -11,6 +11,7 @@
 #include <linux/uaccess.h>
 #include <linux/mutex.h>
 #include "index.h"
+
 //static vals
 static int deviceNumber;
 static int numOpen = 0;
@@ -25,8 +26,9 @@ char message[1024];
 
 EXPORT_SYMBOL(back);
 EXPORT_SYMBOL(size);
+EXPORT_SYMBOL(front);
 EXPORT_SYMBOL(message);
-
+EXPORT_SYMBOL(queueMutex);
 
 static struct class* group14WriteClass = NULL;
 static struct device* group14WriteDevice = NULL;
@@ -58,15 +60,15 @@ static struct file_operations fops =
 
 	extern int init_module(void){
 	//initialize
-	printk(KERN_INFO "group 14 Write: Installing Module...\n");
+	printk(KERN_INFO "group14Write: Installing Module...\n");
 
 	//make sure device number is > 0
 	deviceNumber = register_chrdev(0, DEVICE_NAME, &fops);
 	if(deviceNumber<0){
-		printk(KERN_ALERT "group 14 Write: failed to register a positive number\n.");
+		printk(KERN_ALERT "group14Write: failed to register a positive number\n.");
 		return deviceNumber;
 	}
-	printk(KERN_INFO "group 14 Write: registered correctly with number %d\n", deviceNumber);
+	printk(KERN_INFO "group14Write: registered correctly with number %d\n", deviceNumber);
 
 	group14WriteClass = class_create(THIS_MODULE,CLASS_NAME);
 	if(IS_ERR(group14WriteClass)){
@@ -82,7 +84,8 @@ static struct file_operations fops =
 		printk(KERN_ALERT "Failed to create the device\n");
 		return PTR_ERR(group14WriteDevice);
 	}
-	printk(KERN_INFO "group 14 Write: device class created correctly\n.");
+	printk(KERN_INFO "group14Write: device class created correctly\n.");
+	mutex_init(&queueMutex);
 	return 0;
 }
 
@@ -92,13 +95,13 @@ extern void cleanup_module(void){
 	class_unregister(group14WriteClass);
 	class_destroy(group14WriteClass);
 	unregister_chrdev(deviceNumber, DEVICE_NAME);
-	printk(KERN_INFO "group 14 Write: Goodbye!\n");
+	printk(KERN_INFO "group14Write: Goodbye!\n");
 }
 
 static int dev_open(struct inode* inodep, struct file * filep){
 
 	numOpen++;
-	printk(KERN_INFO "group 14 Write: Device has been opened %d time(s)\n", numOpen);
+	printk(KERN_INFO "group14Write: Device has been opened %d time(s)\n", numOpen);
 	return 0;
 }
 
@@ -112,13 +115,14 @@ static ssize_t dev_write(struct file *filep, const char *buffer, size_t len, lof
 
 	// report using printk each time it is written to.
 	numWrite++;
-	printk(KERN_INFO "group 14 Write: Device has been written to %d time(s)\n", numWrite);
-
+	printk(KERN_INFO "group14Write: Device has been written to %d time(s)\n", numWrite);
+	
 	// add new string to buffer
 	for(i = 0; i < len; i++){
 
 		// check for overflow
 		if(size >= BUFF_LEN){
+			mutex_unlock(&queueMutex);
 			printk(KERN_INFO "ERROR: Already Full.\n");
 			return -1;
 		}
@@ -133,17 +137,16 @@ static ssize_t dev_write(struct file *filep, const char *buffer, size_t len, lof
 	}// end for loop
 	mutex_unlock(&queueMutex);
 
-	printk(KERN_INFO "group 14 Write: The length is currently %d bytes\n", back);
-	printk(KERN_INFO "group 14 Write: Received %zu characters from the user\n", len);
+
+	printk(KERN_INFO "group14Write: Received %zu characters from the user\n", len);
 	return len;
 }
 
 static int dev_release(struct inode *inodep, struct file *filep){
     numClose++;
-    printk(KERN_INFO "group 14: Device has been successfully closed %d time(s)\n", numClose);
+    printk(KERN_INFO "group14Write: Device has been successfully closed %d time(s)\n", numClose);
     return 0;
 }
-
 
 
 
