@@ -21,7 +21,6 @@ static int numRead = 0;
 static int error_count = 0;
 
 int front;
-int back;
 int size;
 
 struct mutex queueMutex;
