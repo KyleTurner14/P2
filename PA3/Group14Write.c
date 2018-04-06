@@ -10,18 +10,22 @@
 #include <linux/fs.h>
 #include <linux/uaccess.h>
 #include <linux/mutex.h>
-
+#include "externed.h"
 //static vals
 static int deviceNumber;
 static int numOpen = 0;
 static int numClose = 0;
 static int numWrite = 0;
 
-int back = 0;
-int size = 0;
+int back;
+int size;
 
-extern struct mutex queueMutex;
-extern char  message[1024];
+struct mutex queueMutex;
+char message[1024];
+
+EXPORT_SYMBOL(back);
+EXPORT_SYMBOL(size);
+EXPORT_SYMBOL(message);
 
 
 static struct class* group14WriteClass = NULL;
@@ -51,8 +55,6 @@ static struct file_operations fops =
 		.write = dev_write,
 		.release = dev_release,
 };
-
-
 
 	extern int init_group14Write(void){
 	//initialize
@@ -141,6 +143,7 @@ static int dev_release(struct inode *inodep, struct file *filep){
     printk(KERN_INFO "group 14: Device has been successfully closed %d time(s)\n", numClose);
     return 0;
 }
+
 
 
 
