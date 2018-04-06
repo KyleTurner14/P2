@@ -11,18 +11,21 @@
 #include <linux/uaccess.h>
 #include <linux/mutex.h>
 
+#include "global.h"
+
 //static vals
 static int deviceNumber;
 static int numOpen = 0;
 static int numClose = 0;
-static int numWrite = 0;
+static int numRead = 0;
+static int error_count = 0;
 
-int front = 0;
-int back = 0;
-int size = 0;
+int front;
+int back;
+int size;
 
-extern struct mutex queueMutex;
-static char message[1024]={0};
+struct mutex queueMutex;
+char message[1024];
 static struct class* group14ReadClass = NULL;
 static struct device* group14ReadDevice = NULL;
 
@@ -30,7 +33,7 @@ static struct device* group14ReadDevice = NULL;
 extern int init_group14Read(void);
 extern void  cleanup_group14Read(void);
 static int dev_open(struct inode *, struct file *);
-static ssize_t dev_write(struct file*, const char *, size_t, loff_t *);
+static ssize_t dev_read(struct file*, char *, size_t, loff_t *);
 static int dev_release(struct inode *, struct file *);
 
 //define
@@ -47,7 +50,7 @@ MODULE_VERSION("1.0");
 static struct file_operations fops =
 {
 		.open = dev_open,
-		.write = dev_write,
+		.read = dev_read,
 		.release = dev_release,
 };
 
@@ -104,7 +107,7 @@ static ssize_t dev_read(struct file * filep, char * buffer, size_t len, loff_t *
 	char printOut [len];
 
 
-	//use the mutex
+	//lock the mutex
 	mutex_lock(&queueMutex);
 
 	//report using printk each time it is written to 
