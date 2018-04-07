@@ -9,10 +9,11 @@
 static char receive[BUFFER_LENGTH];     ///< The receive buffer from the LKM
  
 int main(){
-   int ret, fd;
+   int ret, fd, fg;
    char stringToSend[BUFFER_LENGTH];
    printf("Starting device test code example...\n");
    fd = open("/dev/group14Write", O_RDWR);             // Open the device with read/write access
+   fg = open("/dev/group14Read", O_RDWR);          
    if (fd < 0){
       perror("Failed to open the device...");
       return errno;
@@ -26,18 +27,20 @@ int main(){
       return errno;
    }
    printf("successfully sent!");
- return 0;
+
+ 
+   printf("Press ENTER to read back from the device...\n");
+   getchar();
+ 
+   printf("Reading from the device...\n");
+   ret = read(fg, receive, BUFFER_LENGTH);        // Read the response from the LKM
+   if (ret < 0){
+     perror("Failed to read the message from the device.");
+   return errno;
+   }
+   printf( "%s\n", receive );
+   printf("The received message is: [%s]\n", receive);
+   printf("End of the program\n");
+   return 0;
+
 }
- 
-   //printf("Press ENTER to read back from the device...\n");
-   //getchar();
- 
-   //printf("Reading from the device...\n");
-   //ret = read(fd, receive, BUFFER_LENGTH);        // Read the response from the LKM
-   //if (ret < 0){
-    //  perror("Failed to read the message from the device.");
-     // return errno;
-  // }
-  // printf("The received message is: [%s]\n", receive);
-   //printf("End of the program\n");
-  // return 0;

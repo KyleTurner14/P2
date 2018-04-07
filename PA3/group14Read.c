@@ -8,9 +8,10 @@
 #include <linux/device.h>
 #include <linux/kernel.h>
 #include <linux/fs.h>
-#include <linux/uaccess.h>
+#include <asm/uaccess.h>
+#include <linux/mutex.h>
 
-#include "index.h"
+//#include "index.h"
 
 
 //static vals
@@ -20,12 +21,21 @@ static int numClose = 0;
 static int numRead = 0;
 static int error_count = 0;
 
-int front;
-int size;
-int back;
+int front = 0;
+int size = 0;
+int back = 0;
 
-struct mutex queueMutex;
+
 char message[1024];
+static DEFINE_MUTEX( queueMutex );
+
+EXPORT_SYMBOL(back);
+EXPORT_SYMBOL(size);
+EXPORT_SYMBOL(front);
+EXPORT_SYMBOL(message);
+EXPORT_SYMBOL(queueMutex);
+
+
 static struct class* group14ReadClass = NULL;
 static struct device* group14ReadDevice = NULL;
 
@@ -103,9 +113,8 @@ static int dev_open(struct inode* inodep, struct file * filep){
 static ssize_t dev_read(struct file * filep, char * buffer, size_t len, loff_t *offset){
 
 	int i = 0;
-	char sendBack[len];
-	char printOut [len];
-
+	char sendBack[700];
+	int old_size = size;
 
 	//lock the mutex
 	mutex_lock(&queueMutex);
@@ -117,53 +126,30 @@ static ssize_t dev_read(struct file * filep, char * buffer, size_t len, loff_t *
 	//read info
 	error_count = 0;
 
-	for(i = 0; i < len; i++){
-		sendBack[i] = '0';
-	}
+	while (size > 0) 
+	{
 
-	for(i = 0; i < len; i++){
-
-		// check for no characters left
-		if(size <= 0){
-			printk(KERN_INFO "No more characters left.\n");
-			break;
-		}
-
-		sendBack[i] = message[front % BUFF_LEN];
-		message[front % BUFF_LEN] = '0';
-
+		sendBack[i] = message[front];
+		message[front] = 0;
+		
+		put_user( sendBack[i], buffer++ );
+		printk ( KERN_INFO "%d\t%c\n", size, sendBack[i] );
 		// increment
-		front = (front + 1) % BUFF_LEN;
+		front++;
 		size--;
 
 	}
-
-	// check for errors
-	error_count = copy_to_user(buffer, sendBack, len);
-
 	
-	//if error
-	if(error_count != 0){
-		printk(KERN_INFO "ERROR: Failed to send to back to user.\n");
-		return -1;
-	}
-
-	for(i = 0; i < back; i++){
-		if(sendBack[i] != '0')
-		printOut[i] = sendBack[i];
-	}
+	printk(KERN_INFO "No more characters left.\n");
 
 	//unlock the mutex
 	mutex_unlock(&queueMutex);
-
-
-	printk(KERN_INFO "group14Read: Sent back %s.\n", printOut);
 
 	printk(KERN_INFO "group14Read: The length is currently %d bytes\n", back);
 
 	printk(KERN_INFO "group14Read: Sent %d characters to the user\n", back);
 
-	return len;
+	return old_size;
 
 }//end dev_read 
 

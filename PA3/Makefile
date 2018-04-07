@@ -1,5 +1,5 @@
 obj-m += group14Read.o
-obj-m += group14Write.o
+obj-m += Group14Write.o
 
 all:
 	make -C /lib/modules/$(shell uname -r)/build/ M=$(PWD) modules

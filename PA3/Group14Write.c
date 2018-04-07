@@ -10,7 +10,7 @@
 #include <linux/fs.h>
 #include <linux/uaccess.h>
 #include <linux/mutex.h>
-#include "index.h"
+//#include "index.h"
 
 //static vals
 static int deviceNumber;
@@ -18,17 +18,12 @@ static int numOpen = 0;
 static int numClose = 0;
 static int numWrite = 0;
 
-int back;
-int size;
+extern int front;
+extern int back;
+extern int size;
 
-struct mutex queueMutex;
-char message[1024];
-
-EXPORT_SYMBOL(back);
-EXPORT_SYMBOL(size);
-EXPORT_SYMBOL(front);
-EXPORT_SYMBOL(message);
-EXPORT_SYMBOL(queueMutex);
+extern struct mutex queueMutex;
+extern char message[1024];
 
 static struct class* group14WriteClass = NULL;
 static struct device* group14WriteDevice = NULL;
@@ -107,19 +102,16 @@ static int dev_open(struct inode* inodep, struct file * filep){
 
 static ssize_t dev_write(struct file *filep, const char *buffer, size_t len, loff_t *offset){
 
-	
-
 	int i = 0;    
 
 	mutex_lock(&queueMutex);
 
 	// report using printk each time it is written to.
-	numWrite++;
-	printk(KERN_INFO "group14Write: Device has been written to %d time(s)\n", numWrite);
+	printk(KERN_INFO "group14Write: Device has been written to %d time(s)\n", ++numWrite);
 	
 	// add new string to buffer
-	for(i = 0; i < len; i++){
-
+	for(i = 0; i < len; i++)
+	{
 		// check for overflow
 		if(size >= BUFF_LEN){
 			mutex_unlock(&queueMutex);
@@ -128,11 +120,11 @@ static ssize_t dev_write(struct file *filep, const char *buffer, size_t len, lof
 		}
 
 		// add the new string to the end of the message
-		message[back % BUFF_LEN] = buffer[i];
+		message[back] = buffer[i];
 
 		// increment
 		size++;
-		back = (back+1)%BUFF_LEN;
+		back++;
 
 	}// end for loop
 	mutex_unlock(&queueMutex);
