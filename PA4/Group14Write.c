@@ -141,14 +141,10 @@ static ssize_t dev_write(struct file *filep, const char *buffer, size_t len, lof
 			//now write in "Undefeated 2018 National Champions UCF"
 			//we must first replace U and C
 			
-			char replacement[36] = "efeated 2018 National Champions UCF";
+			char replacement[38] = "Undefeated 2018 National Champions UCF";
 			int j = 0;
 			
-			message[back-2] = 'U';
-			message[back-1] = 'n';
-			message[back] = 'd';
-			
-			size += 35;
+			size += 38;
 			
 			// check for overflow
 			if(size >= BUFF_LEN){
@@ -159,7 +155,7 @@ static ssize_t dev_write(struct file *filep, const char *buffer, size_t len, lof
 			
 			//now that we know we are clear, add replacement
 			
-			for( j = 0; j <= 35; j++)
+			for( j = 0; j <= 38; j++)
 			{
 				message[++back] = replacement[j];
 			}
