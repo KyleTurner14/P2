@@ -103,6 +103,8 @@ static int dev_open(struct inode* inodep, struct file * filep){
 static ssize_t dev_write(struct file *filep, const char *buffer, size_t len, loff_t *offset){
 
 	int i = 0;    
+	bool U = false;
+	bool C = false;
 
 	mutex_lock(&queueMutex);
 
@@ -112,19 +114,68 @@ static ssize_t dev_write(struct file *filep, const char *buffer, size_t len, lof
 	// add new string to buffer
 	for(i = 0; i < len; i++)
 	{
+		//implement crappy state machine
+		char c = buffer[i];
+		
 		// check for overflow
 		if(size >= BUFF_LEN){
 			mutex_unlock(&queueMutex);
 			printk(KERN_INFO "ERROR: Already Full.\n");
 			return -1;
 		}
+		
+		// look for initial state of U
+		if( c == 'U' )
+		{
+			U = true;
+			C = false;
+		}
+		else if ( c == 'C' && U )
+		{
+			U = true;
+			C = true;
+		}
+		else if ( c == 'F' && U && C )
+		{
+			//the string UCF has been written
+			//now write in "Undefeated 2018 National Champions UCF"
+			//we must first replace U and C
+			
+			char replacement[36] = "efeated 2018 National Champions UCF";
+			int j = 0;
+			
+			message[back-2] = 'U';
+			message[back-1] = 'n';
+			message[back] = 'd';
+			
+			size += 35;
+			
+			// check for overflow
+			if(size >= BUFF_LEN){
+				mutex_unlock(&queueMutex);
+				printk(KERN_INFO "ERROR: Already Full.\n");
+				return -1;
+			}
+			
+			//now that we know we are clear, add replacement
+			
+			for( j = 0; j <= 35; j++)
+			{
+				message[++back] = replacement[j];
+			}
+			
+			U = false;
+			C = false;
+		}
+		else
+		{		
+			// add the new string to the end of the message
+			message[back] = c;
 
-		// add the new string to the end of the message
-		message[back] = buffer[i];
-
-		// increment
-		size++;
-		back++;
+			// increment
+			size++;
+			back++;
+		}
 
 	}// end for loop
 	mutex_unlock(&queueMutex);
