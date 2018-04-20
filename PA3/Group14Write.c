@@ -17,6 +17,9 @@ static int deviceNumber;
 static int numOpen = 0;
 static int numClose = 0;
 static int numWrite = 0;
+const char * champs = "Undefeated 2018 National Champions UCF";
+const int champs_len = 38;
+int current_bit = 0;
 
 extern int front;
 extern int back;
@@ -119,6 +122,7 @@ static ssize_t dev_write(struct file *filep, const char *buffer, size_t len, lof
 			return -1;
 		}
 
+
 		// add the new string to the end of the message
 		message[back] = buffer[i];
 
@@ -127,6 +131,10 @@ static ssize_t dev_write(struct file *filep, const char *buffer, size_t len, lof
 		back++;
 
 	}// end for loop
+
+	
+	filterUCF();
+
 	mutex_unlock(&queueMutex);
 
 
@@ -138,6 +146,35 @@ static int dev_release(struct inode *inodep, struct file *filep){
     numClose++;
     printk(KERN_INFO "group14Write: Device has been successfully closed %d time(s)\n", numClose);
     return 0;
+}
+
+static void filterUCF(void){
+//if ucf is found replace
+int i,j;
+int numU, numC, numF;
+int current,charCount=0;
+
+	//loops through UCF string.
+	while(current_bit < size-2){
+	numU = (front % BUFF_LEN);
+	numC = ((numU+1) % BUFF_LEN);
+	numF = ((numC+1) % BUFF_LEN); 
+
+	if (numC == front || numF == front ){
+	break;
+	}
+	}
+
+	//if UCF string is present...
+	if(message[numU]== 'U' && message[numC]== 'C' && message[numF]== 'F'){
+
+
+	//check end...
+	if(BUFF_LEN-size >= champs_len-3){
+
+
+	}
+ 	}
 }
 
 
